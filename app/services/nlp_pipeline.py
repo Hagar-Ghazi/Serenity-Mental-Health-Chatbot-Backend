@@ -162,6 +162,8 @@ class NLPPipeline:
         # 2. Run Language Detection & Emotion Classification
         lang_res = language_detector.detect(query)
         lang_code = lang_res["prediction"]  # "en" or "ar"
+        if lang_code not in ("en", "ar"):
+            lang_code = "en"
         
         emotion_res = emotion_classifier.classify(query)
         emotion = emotion_res["emotion"]
