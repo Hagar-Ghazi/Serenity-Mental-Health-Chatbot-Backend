@@ -87,7 +87,7 @@ def mock_external_calls(monkeypatch):
     monkeypatch.setattr(emotion_classifier, "classify", mock_classify)
 
 
-    # Mock Groq classifier completion
+    # Mock Gemini intent classifier
     from app.services.intent import intent_classifier
     def mock_intent_classify(text, detected_emotion=None, detected_language=None):
         return {
@@ -117,7 +117,7 @@ def mock_external_calls(monkeypatch):
     monkeypatch.setattr(rag_service, "retrieve_and_rerank", mock_retrieve)
 
 
-    # Mock Groq Chat completions in nlp_pipeline
+    # Mock Gemini Chat completions in nlp_pipeline
     from app.services.nlp_pipeline import nlp_pipeline
     def mock_call_llm(query, prompt, history):
         if "⚠ CRISIS CONTEXT ACTIVE" in prompt:

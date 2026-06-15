@@ -7,6 +7,7 @@ sqlalchemy>=2.0.0
 
 # NLP Pipeline Models & Clients
 groq>=0.5.0
+google-generativeai>=0.8.0
 qdrant-client>=1.8.0
 transformers>=4.38.0
 torch>=2.2.0

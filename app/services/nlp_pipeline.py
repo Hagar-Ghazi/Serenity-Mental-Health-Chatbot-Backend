@@ -5,9 +5,9 @@ import random
 import logging
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
-from groq import Groq
+import google.generativeai as genai
 
-from app.config import GROQ_API_KEY, GROQ_MODEL
+from app.config import GEMINI_API_KEY, GEMINI_MODEL
 from app.services.language import language_detector
 from app.services.emotion import emotion_classifier
 from app.services.intent import intent_classifier
@@ -96,33 +96,40 @@ def _detect_quick_response(text: str) -> Optional[Tuple[str, str]]:
 class NLPPipeline:
     """Consolidated orchestration pipeline for intent classification, RAG retrieval, and generation."""
     def __init__(self):
-        self._groq_client = None
+        self._gemini_configured = False
 
-    def _get_groq_client(self):
-        if not self._groq_client:
-            if not GROQ_API_KEY:
-                raise ValueError("GROQ_API_KEY is not set.")
-            self._groq_client = Groq(api_key=GROQ_API_KEY)
-        return self._groq_client
+    def _ensure_gemini(self):
+        if not self._gemini_configured:
+            if not GEMINI_API_KEY:
+                raise ValueError("GEMINI_API_KEY is not set.")
+            genai.configure(api_key=GEMINI_API_KEY)
+            self._gemini_configured = True
 
     def _call_therapist_llm(self, query: str, prompt: str, history: list) -> str:
-        client = self._get_groq_client()
-        messages = [{"role": "system", "content": prompt}]
-        # Append sliding conversation history
+        self._ensure_gemini()
+
+        model = genai.GenerativeModel(
+            GEMINI_MODEL,
+            system_instruction=prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=600
+            )
+        )
+
+        # Convert session history to Gemini format (role: user/model)
+        gemini_history = []
         if history:
-            messages.extend(history[-12:])
-        messages.append({"role": "user", "content": query})
+            for msg in history[-12:]:
+                role = "user" if msg["role"] == "user" else "model"
+                gemini_history.append({"role": role, "parts": [msg["content"]]})
 
         try:
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=600
-            )
-            return response.choices[0].message.content.strip()
+            chat = model.start_chat(history=gemini_history)
+            response = chat.send_message(query)
+            return response.text.strip()
         except Exception as e:
-            logger.error(f"Groq Chat Completion Error: {e}", exc_info=True)
+            logger.error(f"Gemini Chat Completion Error: {e}", exc_info=True)
             return FALLBACK_GENERAL
 
     def run(self, query: str, session: SessionMemory, country: str = "United States") -> Dict[str, Any]:

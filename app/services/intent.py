@@ -1,15 +1,15 @@
 import json
 import joblib
 from typing import Dict, Any, Optional
-from groq import Groq
-from app.config import INTENT_ARTIFACTS_DIR, GROQ_API_KEY, GROQ_MODEL
+import google.generativeai as genai
+from app.config import INTENT_ARTIFACTS_DIR, GEMINI_API_KEY, GEMINI_MODEL
 
 class IntentClassifier:
-    """Lazy loader and wrapper for intent classification and safety filtering using Groq."""
+    """Lazy loader and wrapper for intent classification and safety filtering using Google Gemini."""
     def __init__(self):
         self._crisis_signals = None
         self._system_prompt = None
-        self._groq_client = None
+        self._model = None
         self._is_loaded = False
 
     def _load(self):
@@ -28,10 +28,19 @@ class IntentClassifier:
             with open(prompt_path, "r", encoding="utf-8") as f:
                 self._system_prompt = f.read()
 
-            if not GROQ_API_KEY:
-                raise ValueError("GROQ_API_KEY is not configured in environment variables.")
+            if not GEMINI_API_KEY:
+                raise ValueError("GEMINI_API_KEY is not configured in environment variables.")
                 
-            self._groq_client = Groq(api_key=GROQ_API_KEY)
+            genai.configure(api_key=GEMINI_API_KEY)
+            self._model = genai.GenerativeModel(
+                GEMINI_MODEL,
+                system_instruction=self._system_prompt,
+                generation_config=genai.GenerationConfig(
+                    temperature=0.0,
+                    max_output_tokens=300,
+                    response_mime_type="application/json"
+                )
+            )
             self._is_loaded = True
 
     def classify(self, text: str, detected_emotion: Optional[str] = None, detected_language: Optional[str] = None) -> Dict[str, Any]:
@@ -57,18 +66,9 @@ class IntentClassifier:
                 context_parts.append(f"Detected language: {detected_language}")
             enriched_message = "\n".join(context_parts)
 
-            response = self._groq_client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[
-                    {"role": "system", "content": self._system_prompt},
-                    {"role": "user", "content": enriched_message}
-                ],
-                temperature=0.0,
-                max_tokens=300,
-                response_format={"type": "json_object"}
-            )
+            response = self._model.generate_content(enriched_message)
             
-            result = json.loads(response.choices[0].message.content.strip())
+            result = json.loads(response.text.strip())
             result.setdefault("crisis_flag", False)
             return result
 
