@@ -1,4 +1,3 @@
-import os
 import re
 import json
 import time
@@ -6,7 +5,7 @@ import random
 import logging
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 from app.config import GROQ_API_KEY, GROQ_MODEL, BASE_DIR
 from app.services.language import language_detector
@@ -214,7 +213,7 @@ def _detect_quick_response(text: str) -> Optional[Tuple[str, str]]:
 
     if not remainder and detected:
         cats = [c for c, _ in detected]
-        langs = [l for _, l in detected]
+        langs = [lang for _, lang in detected]
         for priority_cat in ["out_of_scope", "goodbye", "gratitude", "greeting"]:
             if priority_cat in cats:
                 dominant_cat = priority_cat
@@ -229,9 +228,12 @@ def _detect_quick_response(text: str) -> Optional[Tuple[str, str]]:
 
 def _get_time_period() -> str:
     hour = datetime.now(timezone.utc).hour
-    if 5 <= hour < 12:   return "morning"
-    if 12 <= hour < 17:  return "afternoon"
-    if 17 <= hour < 21:  return "evening"
+    if 5 <= hour < 12:
+        return "morning"
+    if 12 <= hour < 17:
+        return "afternoon"
+    if 17 <= hour < 21:
+        return "evening"
     return "night"
 
 
@@ -299,7 +301,6 @@ def _intelligence_heuristic(query: str, chunks: list, emotion: Optional[str] = N
             "action": "fallback", "reasoning": "No chunks retrieved"
         }
 
-    avg_similarity = sum(c["similarity"] for c in chunks) / len(chunks)
     best_similarity = max(c["similarity"] for c in chunks)
 
     priority_topics = EMOTION_TOPIC_MAP.get(emotion, [])
@@ -314,11 +315,16 @@ def _intelligence_heuristic(query: str, chunks: list, emotion: Optional[str] = N
     if not relevant_indices:
         relevant_indices = list(range(len(chunks)))
 
-    if best_similarity >= 0.70:    quality = 5
-    elif best_similarity >= 0.55:  quality = 4
-    elif best_similarity >= 0.45:  quality = 3
-    elif best_similarity >= 0.35:  quality = 2
-    else:                          quality = 1
+    if best_similarity >= 0.70:
+        quality = 5
+    elif best_similarity >= 0.55:
+        quality = 4
+    elif best_similarity >= 0.45:
+        quality = 3
+    elif best_similarity >= 0.35:
+        quality = 2
+    else:
+        quality = 1
 
     if topic_matches >= 2 and quality < 5:
         quality += 1
@@ -357,7 +363,7 @@ def _build_therapist_prompt(
         hotline_info = get_hotline(country)
         lang_key = "ar" if language == "ar" else "en"
         sections.append(
-            f"⚠ CRISIS CONTEXT ACTIVE\nInclude these resources naturally at the end:\n"
+            "⚠ CRISIS CONTEXT ACTIVE\nInclude these resources naturally at the end:\n"
             + CRISIS_RESOURCES_TEMPLATE[lang_key].format(**hotline_info)
         )
     elif prior_crisis:

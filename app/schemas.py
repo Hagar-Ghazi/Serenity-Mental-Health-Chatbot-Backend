@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="The user message to the chatbot")

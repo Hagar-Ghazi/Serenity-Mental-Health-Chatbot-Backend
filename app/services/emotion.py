@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from app.config import HF_MODEL_NAME
 
 EMOTION_META = {

@@ -30,7 +30,6 @@ def test_chat_empty_message(client):
 def test_chat_crisis_flagged(client, monkeypatch, db_session):
     # Mock pipeline output to simulate a crisis event
     from app.services.nlp_pipeline import nlp_pipeline
-    original_run = nlp_pipeline.run
     
     def mock_run_crisis(query, session, country="United States"):
         return {

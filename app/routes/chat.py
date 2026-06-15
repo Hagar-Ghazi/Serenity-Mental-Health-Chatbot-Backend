@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import ChatSession, Message, CrisisEvent
+from app.models import ChatSession, Message
 from app.schemas import ChatRequest, ChatResponse
 from app.services.nlp_pipeline import nlp_pipeline
 from app.services.session import session_store
