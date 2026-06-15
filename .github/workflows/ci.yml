@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
 
 jobs:
   lint-and-test:
@@ -21,7 +22,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff pytest
+          pip install ruff pytest httpx
           # Use CPU-only PyTorch to accelerate CI build times
           pip install --extra-index-url https://download.pytorch.org/whl/cpu torch
           pip install -r requirements.txt
@@ -35,8 +36,40 @@ jobs:
       - name: Run Unit Tests
         run: pytest -v
 
-  deploy:
+  build-and-push-docker:
     needs: lint-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: [lint-and-test, build-and-push-docker]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -54,5 +87,6 @@ jobs:
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub CI Bot"
           
-          # Push the main branch to Hugging Face Spaces Git remote
-          git push --force https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME main
+          # Push the local branch that triggered the build to the main branch of HF Spaces
+          LOCAL_BRANCH=$(git branch --show-current)
+          git push --force https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME $LOCAL_BRANCH:main
