@@ -13,6 +13,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=sqlite:///./mental_health.db
+      - ENABLE_TELEMETRY=True
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=serenity-chatbot-backend
     volumes:

@@ -31,5 +31,6 @@ LANGUAGE_DETECTOR_PATH = ARTIFACTS_DIR / "language_detector.joblib"
 INTENT_ARTIFACTS_DIR = ARTIFACTS_DIR / "intent_classifier"
 
 # OpenTelemetry & Observability Config
+ENABLE_TELEMETRY = os.getenv("ENABLE_TELEMETRY", "False").lower() in ("true", "1", "t")
 OTEL_EXPORTER_OTLP_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318")
 OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "serenity-chatbot-backend")

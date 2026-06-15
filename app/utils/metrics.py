@@ -4,7 +4,7 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource
-from app.config import OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME
+from app.config import OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, ENABLE_TELEMETRY
 
 logger = logging.getLogger("app_logger")
 
@@ -32,6 +32,10 @@ def init_metrics():
     global intent_counter, latency_histogram, rag_scores_histogram
     global msg_length_histogram, feedback_counter, emotion_counter
     global http_requests_counter, http_errors_counter
+
+    if not ENABLE_TELEMETRY:
+        logger.info("OpenTelemetry is disabled (ENABLE_TELEMETRY=False). Using dummy metrics.")
+        return
 
     try:
         resource = Resource(attributes={"service.name": OTEL_SERVICE_NAME})
