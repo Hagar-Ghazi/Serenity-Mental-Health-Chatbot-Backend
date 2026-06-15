@@ -93,8 +93,8 @@ def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)):
     metrics.msg_length_counter.add(len(message_text))
 
     # Record similarity scores of retrieved chunks if any
-    for score in result.get("rag_scores", []):
-        metrics.rag_scores_gauge.set(score)
+    for source in result.get("sources", []):
+        metrics.rag_scores_gauge.set(source.get("similarity", 0.0))
 
     return ChatResponse(
         response=result["answer"],
