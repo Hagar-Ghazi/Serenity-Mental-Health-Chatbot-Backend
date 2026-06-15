@@ -122,4 +122,3 @@ def init_metrics():
             f"OpenTelemetry metrics failed to initialize, running with dummy metrics: {e}",
             exc_info=True,
         )
-
