@@ -23,6 +23,30 @@ async def lifespan(app: FastAPI):
     # 2. Initialize OpenTelemetry Metrics Export
     metrics.init_metrics()
     
+    # 3. Preload ML Models asynchronously
+    app_logger.info("Preloading ML models in background (this may take a minute on first run)...")
+    import threading
+    from app.services.emotion import emotion_classifier
+    from app.services.language import language_detector
+    from app.services.rag import rag_service
+    from app.services.intent import intent_classifier
+    
+    def preload_models():
+        try:
+            emotion_classifier._load()
+            app_logger.info("✅ Emotion model loaded.")
+            language_detector._load()
+            app_logger.info("✅ Language model loaded.")
+            rag_service._load()
+            app_logger.info("✅ RAG model loaded.")
+            intent_classifier._load()
+            app_logger.info("✅ Intent classifier loaded.")
+            app_logger.info("🎉 All ML models preloaded successfully!")
+        except Exception as e:
+            app_logger.error(f"❌ Failed to preload ML models: {e}", exc_info=True)
+            
+    threading.Thread(target=preload_models, daemon=True).start()
+    
     yield
     app_logger.info("Shutting down Serenity Chatbot Backend API...")
 
