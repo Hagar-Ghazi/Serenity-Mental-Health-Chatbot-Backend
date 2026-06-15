@@ -89,12 +89,12 @@ def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)):
     # 6. Record telemetry metrics via OpenTelemetry SDK
     metrics.intent_counter.add(1, {"intent": result["intent"]})
     metrics.emotion_counter.add(1, {"emotion": result.get("emotion") or "uncertain"})
-    metrics.latency_histogram.record(result["latency_ms"], {"intent": result["intent"]})
-    metrics.msg_length_histogram.record(len(message_text))
+    metrics.latency_gauge.set(result["latency_ms"], {"intent": result["intent"]})
+    metrics.msg_length_counter.add(len(message_text))
 
     # Record similarity scores of retrieved chunks if any
     for score in result.get("rag_scores", []):
-        metrics.rag_scores_histogram.record(score)
+        metrics.rag_scores_gauge.set(score)
 
     return ChatResponse(
         response=result["answer"],

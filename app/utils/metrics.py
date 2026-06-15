@@ -15,16 +15,16 @@ class DummyCounter:
         pass
 
 
-class DummyHistogram:
-    def record(self, value, attributes=None):
+class DummyGauge:
+    def set(self, value, attributes=None):
         pass
 
 
 # Global Metric Instances (Pre-initialized with Dummy fallbacks)
 intent_counter = DummyCounter()
-latency_histogram = DummyHistogram()
-rag_scores_histogram = DummyHistogram()
-msg_length_histogram = DummyHistogram()
+latency_gauge = DummyGauge()
+rag_scores_gauge = DummyGauge()
+msg_length_counter = DummyCounter()
 feedback_counter = DummyCounter()
 emotion_counter = DummyCounter()
 http_requests_counter = DummyCounter()
@@ -33,8 +33,8 @@ http_errors_counter = DummyCounter()
 
 def init_metrics():
     """Initializes the OpenTelemetry meter provider, registers exporter and metrics."""
-    global intent_counter, latency_histogram, rag_scores_histogram
-    global msg_length_histogram, feedback_counter, emotion_counter
+    global intent_counter, latency_gauge, rag_scores_gauge
+    global msg_length_counter, feedback_counter, emotion_counter
     global http_requests_counter, http_errors_counter
 
     if not ENABLE_TELEMETRY:
@@ -63,21 +63,21 @@ def init_metrics():
             description="Counts detected user intents (greeting, goodbye, mental_health_question, out_of_scope)",
             unit="1",
         )
-        latency_histogram = meter.create_histogram(
+        latency_gauge = meter.create_gauge(
             name="response_latency_ms",
             description="Response latency of the chatbot NLP pipeline in milliseconds",
             unit="ms",
         )
-        rag_scores_histogram = meter.create_histogram(
+        rag_scores_gauge = meter.create_gauge(
             name="rag_retrieval_similarity_scores",
             description="Similarity scores of context retrieved from Qdrant vector database",
             unit="score",
         )
 
         # 2. Data Metrics
-        msg_length_histogram = meter.create_histogram(
+        msg_length_counter = meter.create_counter(
             name="message_length_chars",
-            description="Distribution of user input query character counts",
+            description="Total count of user input query character counts",
             unit="char",
         )
         feedback_counter = meter.create_counter(
@@ -122,3 +122,4 @@ def init_metrics():
             f"OpenTelemetry metrics failed to initialize, running with dummy metrics: {e}",
             exc_info=True,
         )
+
