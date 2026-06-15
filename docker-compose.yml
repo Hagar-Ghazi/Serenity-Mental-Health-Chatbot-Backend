@@ -12,6 +12,7 @@ services:
     env_file:
       - .env
     environment:
+      - PORT=8000
       - DATABASE_URL=sqlite:///./data/mental_health.db
       - ENABLE_TELEMETRY=True
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
