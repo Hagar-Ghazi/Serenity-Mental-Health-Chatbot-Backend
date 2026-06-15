@@ -1,0 +1,2 @@
+app/artifacts/language_detector.joblib filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,27 @@
+# Python environment and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# SQLite database and logs
+*.db
+logs/
+app.log
+
+# Credentials and configuration overrides
+.env
+secret_key.txt
