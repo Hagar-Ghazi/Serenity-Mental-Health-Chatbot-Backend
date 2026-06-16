@@ -16,6 +16,7 @@ def get_timings():
     """Reads the last few lines of the pipeline conversations log file to show performance timings."""
     import json
     from app.services.nlp_pipeline import LOG_FILE
+
     if not LOG_FILE.exists():
         return {"message": "No logs recorded yet"}
     try:
