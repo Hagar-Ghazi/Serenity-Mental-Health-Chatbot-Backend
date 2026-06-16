@@ -342,7 +342,6 @@ A continuous integration and deployment pipeline is configured in `.github/workf
 
 ## 🔗 Project Deliverables & Links
 
-- **Backend API Repository**: [https://github.com/Hagar-Ghazi/Mental-Health-Mlops](https://github.com/Hagar-Ghazi/Mental-Health-Mlops)
 - **Deployed API Endpoint**: [https://hagarghazi-serenity-backend.hf.space](https://hagarghazi-serenity-backend.hf.space)
 - **FastAPI Swagger Docs**: [https://hagarghazi-serenity-backend.hf.space/docs](https://hagarghazi-serenity-backend.hf.space/docs)
 - **Frontend Client Repository**: [https://github.com/Hagar-Ghazi/Serenity-Mental-Health-Chatbot-Frontend](https://github.com/Hagar-Ghazi/Serenity-Mental-Health-Chatbot-Frontend)
