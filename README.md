@@ -1,27 +1,18 @@
----
-title: Serenity Backend
-emoji: 🪐
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
 
 # 🪐 Serenity Chatbot: High-Performance Empathetic Mental Health AI Support Platform
 
-Serenity is an empathetic mental health support chatbot system designed to deliver immediate, clinically guided, and safe conversational assistance to users. This repository houses the production-ready **Asynchronous FastAPI Backend API**, containerized with Docker, monitored via OpenTelemetry and Axiom, and deployed automatically through a GitHub Actions CI/CD pipeline.
+Serenity is an empathetic mental health support chatbot system designed to deliver immediate, clinically guided and safe conversational assistance to users. This repository houses the production-ready **Asynchronous FastAPI Backend API** containerized with Docker monitored via OpenTelemetry and Axiom and deployed automatically through a GitHub Actions CI/CD pipeline.
 
 ---
 
-## 📺 Project Demo Video & Live Interface
+## Project Demo Video & Live Interface
 
-Below is the end-to-end system demonstration showing the chatbot frontend interacting in real-time, handling diverse intents (greetings, mental health queries, out-of-scope requests), receiving user feedback, and visualizing operational telemetry in Axiom.
+Below is the end-to-end system demonstration showing the chatbot frontend interacting in real-time handling diverse intents (greetings, mental health queries, out-of-scope requests) receiving user feedback and visualizing operational telemetry in Axiom.
 
 <div align="center">
   <h3>🎬 System Walkthrough Demo</h3>
   <video width="720" height="405" controls>
-    <source src="assets/mental-health-chatbot-video.mp4" type="video/mp4">
+    <source src="assets/serenity-mental-health-chatbot-video.webm" type="video/webm">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -30,27 +21,32 @@ Below is the end-to-end system demonstration showing the chatbot frontend intera
 
 ## 🎨 User Interface & Frontend Design
 
-The Serenity client is a modern, responsive web interface built to foster a calming, premium user experience.
+The Serenity client is a modern, responsive web interface built to foster a calming and premium user experience.
 
 <div align="center">
   <img src="assets/Serenity_Frontend.png" alt="Serenity Frontend Chat Interface" width="720"/>
-  <p><i>Figure 1: Premium frontend interface demonstrating responsive message bubbles, typing indicators, and user feedback buttons.</i></p>
+  <p><i>Figure 1: Premium frontend interface demonstrating responsive message bubbles, typing indicators and user feedback buttons.</i></p>
 </div>
 
 ---
 
 ## 📋 Project Planning & API Contract Analysis
 
-At the project inception, we conducted a thorough planning phase to map requirements and integrate backend and frontend systems seamlessly.
+At the project inception we conducted a thorough planning phase to map requirements and integrate backend and frontend systems seamlessly.
+
+
 
 ### 1. Frontend Code Review
 We analyzed the client application (composed of `index.html`, `style.css`, and `app.js`) to establish the interface logic:
+
 - The frontend exposes a sliding conversation pane displaying incoming and outgoing messages.
 - Message rendering relies on structured JSON fields (`response`, `intent`, `emotion`, `crisis_flag`).
 - Thumbs up/down icons map to an interactive feedback loop, pushing rating events back to the backend.
 
+
+
 ### 2. API Contract Specification
-Based on the client's execution flow, we defined a strict, low-latency API contract:
+Based on the client's execution flow we defined a strict, low-latency API contract:
 
 | Endpoint | HTTP Method | Request Payload | Response Payload | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -59,20 +55,25 @@ Based on the client's execution flow, we defined a strict, low-latency API contr
 | `/health` | **GET** | *None* | `{"status": "ok", "active_sessions": int}` | Reports application health and tracks concurrent memory sessions. |
 | `/health/timings` | **GET** | *None* | `{"last_runs": list}` | Debug route displaying timing breakdowns of recent pipeline runs. |
 
-- **CORS Configuration**: The backend implements standard `CORSMiddleware` configured to allow all origins (`*`) during student development, ensuring cross-origin requests from the GitHub Pages frontend origin bypass browser security blocks successfully.
+
+
+- **CORS Configuration**:
+  The backend implements standard `CORSMiddleware` configured to allow all origins (`*`) during student development ensuring cross-origin requests from the GitHub Pages frontend origin bypass browser security blocks successfully.
 
 ---
 
+
+
 ## 🧠 NLP Pipeline & Decision Logic Architecture
 
-Serenity's NLP orchestration engine routes queries through a multi-stage, safety-first workflow designed to prevent hallucinations, identify crises, and deliver hyper-personalized support.
+Serenity's NLP orchestration engine routes queries through a multi-stage, safety-first workflow designed to prevent hallucinations, identify crises and deliver hyper-personalized support.
 
 ```
                    [ User Message ]
                            │
                            ▼
              ┌───────────────────────────┐
-             │ 1. Language Lock Detection │  <-- Local TF-IDF + Linear SVC Classifier
+             │ 1. Language Lock Detection│  <-- Local TF-IDF + Linear SVC Classifier
              └─────────────┬─────────────┘
                            ▼
              ┌───────────────────────────┐
@@ -95,7 +96,7 @@ Serenity's NLP orchestration engine routes queries through a multi-stage, safety
                     │              │
                     ▼              ▼
              ┌───────────────────────────┐
-             │ 4. Prompt Engineering     │  <-- Combines Context, History, and Emotion
+             │ 4. Prompt Engineering     │  <-- Combines Context, History and Emotion
              └─────────────┬─────────────┘
                            ▼
              ┌───────────────────────────┐
@@ -103,40 +104,55 @@ Serenity's NLP orchestration engine routes queries through a multi-stage, safety
              └───────────────────────────┘
 ```
 
+
 ### 1. Language Lock
-Evaluates whether the incoming query is in English or Arabic to enforce language consistency. If Arabic is detected, Uvicorn locks the output language to warm Egyptian Arabic (`عامية مصرية بسيطة`) to provide a localized, comfortable conversational experience.
+Evaluates whether the incoming query is in English or Arabic to enforce language consistency. If Arabic is detected Uvicorn locks the output language to warm Egyptian Arabic (`عامية مصرية بسيطة`) to provide a localized and comfortable conversational experience.
+
 
 ### 2. Emotion Profiling
 Queries run locally through a fine-tuned DistilBERT sequence classifier to evaluate emotional state (`sadness`, `fear`, `anger`, `joy`, `love`, `surprise`).
+
+
 
 ### 3. Crisis & Safety First-Line Defense
 The system implements a critical, multi-tiered safety checking system:
 - **Hardcoded Triggers**: Scans the input text for crisis keywords (e.g., suicide, self-harm, ending my life).
 - **LLM Safety Intent**: Groq Llama 3 parses the message to catch complex safety breaches.
 - **Emotion Risk**: Flags messages exhibiting extreme despair or high-confidence distress signals.
-- **Crisis Routing**: If flagged, the pipeline immediately bypasses RAG and general conversational routing, generates an empathetic crisis intervention response, and injects emergency hotline numbers dynamically tailored to the user's location based on their IP address (e.g., Egypt hotlines for Egyptian IPs, US/International hotlines for others).
+- **Crisis Routing**: If flagged the pipeline immediately bypasses RAG and general conversational routing generates an empathetic crisis intervention response and injects emergency hotline numbers dynamically tailored to the user's location based on their IP address (e.g., Egypt hotlines for Egyptian IPs, US/International hotlines for others).
+
 
 ### 4. Intent Classification
-Using few-shot instructions, Groq Llama 3 categorizes queries into `greeting`, `goodbye`, `mental_health_question`, or `out_of_scope`. 
-- **Out-of-Scope Handling**: Queries categorized as out-of-scope (e.g., asking for python scripts or recipe instructions) immediately bypass downstream RAG retrieval and LLM steps. They return a polite boundary-setting response, protecting resources and preventing API usage charges.
+Using few-shot instructions Groq Llama 3 categorizes queries into **greeting, goodbye, mental_health_question, or out_of_scope**.
+
+- **Out-of-Scope Handling**:
+  Queries categorized as out-of-scope (e.g., asking for python scripts or recipe instructions) immediately bypass downstream RAG retrieval and LLM steps. They return a polite boundary-setting response protecting resources and preventing API usage charges.
+
 
 ### 5. Adaptive Context Retrieval (RAG)
-For valid mental health questions, the user query is encoded locally via `sentence-transformers/all-MiniLM-L6-v2` and searched in Qdrant Cloud. An **Adaptive Top-K** mechanism adjusts retrieval density (e.g., top-3 for short inputs, top-7 for detailed entries) to balance search coverage and context window size.
+For valid mental health questions the user query is encoded locally via **sentence-transformers/all-MiniLM-L6-v2** and searched in Qdrant Cloud.
+
+An **Adaptive Top-K** mechanism adjusts retrieval density (e.g., top-3 for short inputs, top-7 for detailed entries) to balance search coverage and context window size.
+
+
 
 ### 6. Emotion-Based Context Reranking
-Retrieved chunks are reranked using a custom heuristic: similarity scores are boosted if a chunk's topic matches the user's detected emotional state (e.g., boosting depression topics for sad users) or if the chunk exhibits high empathy tags.
+Retrieved chunks are reranked using a custom heuristic: similarity scores are boosted if a chunk's topic matches the user's detected emotional state (e.g. boosting depression topics for sad users) or if the chunk exhibits high empathy tags.
+
 
 ### 7. Intelligence Heuristic / Decision Gate
-The pipeline reviews the top search scores. If the best similarity score falls below a threshold of `0.35`, the RAG context is bypassed entirely. The system routes to a warm fallback prompt to prevent generating hallucinated or clinical-sounding answers.
+The pipeline reviews the top search scores. If the best similarity score falls below a threshold of 0.35 the RAG context is bypassed entirely. The system routes to a warm fallback prompt to prevent generating hallucinated or clinical-sounding answers.
+
 
 ### 8. Context-Aware LLM Generation
-The final response is generated using Groq Llama 3 70B, combining the compiled therapist system prompt, retrieved clinical context, sliding session history (up to 12 turns to prevent memory overflow), and the user query.
+The final response is generated using Groq Llama 3 70B combining the compiled therapist system prompt, retrieved clinical context, sliding session history (up to 12 turns to prevent memory overflow) and the user query.
 
 ---
 
+
 ## 📊 Model Evaluation & Engineering Trade-offs
 
-To optimize size, inference latency, accuracy, and server memory consumption, we evaluated multiple model architectures:
+To optimize size, inference latency, accuracy and server memory consumption, we evaluated multiple model architectures:
 
 ### Components Comparison Table
 
@@ -153,44 +169,69 @@ To optimize size, inference latency, accuracy, and server memory consumption, we
 
 ---
 
-## ⚡ High-Performance Asynchronous Architecture
+## High-Performance Asynchronous Architecture
 
-Initially, the backend codebase ran a synchronous thread-blocking pipeline. In that configuration, network API calls (Qdrant vector search, Groq completions) and CPU-heavy classifier inferences ran sequentially, locking Uvicorn's execution thread and resulting in high latencies (30–60+ seconds per message).
+Initially the backend codebase ran a synchronous thread-blocking pipeline. In that configuration, network API calls (Qdrant vector search, Groq completions) and CPU-heavy classifier inferences ran sequentially locking Uvicorn's execution thread and resulting in high latencies (30–60+ seconds per message).
 
-To resolve this bottleneck, we refactored the entire stack to be **fully asynchronous (Async/Await)**:
-1. **Async Network Clients**: Refactored the database and LLM pipelines to use `AsyncQdrantClient` and `AsyncGroq`, ensuring that external network wait times do not lock the server threads.
-2. **Concurrent CPU Tasks**: Leveraged `fastapi.concurrency.run_in_threadpool` wrapped inside `asyncio.gather` to execute the local scikit-learn language detector and fine-tuned PyTorch emotion classifier concurrently in non-blocking worker threads.
-3. **Async Endpoints**: Promoted `/chat` and `/feedback` API routes to `async def` and wrapped SQLite database transactions inside asynchronous worker thread pools.
+To resolve this bottleneck we refactored the entire stack to be **fully asynchronous (Async/Await)**:
 
-**Result**: Average message processing latency dropped from 50 seconds to **`1.65 seconds`**—achieving a **`30x performance acceleration`** under live conditions.
+1. **Async Network Clients**:
+   Refactored the database and LLM pipelines to use **AsyncQdrantClient and **AsyncGroq** ensuring that external network wait times do not lock the server threads.
 
----
+2. **Concurrent CPU Tasks**:
+   Leveraged **fastapi.concurrency.run_in_threadpool** wrapped inside asyncio.gather to execute the local scikit-learn language detector and fine-tuned PyTorch emotion classifier concurrently in non-blocking worker threads.
 
-## 🛡️ Security & Resource Management: Rate Limiting
+3. **Async Endpoints**:
+   Promoted **/chat** and **/feedback** API routes to async def and wrapped SQLite database transactions inside asynchronous worker thread pools.
 
-To protect backend resources, database capacity, and downstream API quotas (Groq & Qdrant Cloud), we built a custom **Sliding-Window Token-Bucket Rate Limiter Middleware**:
-- **Threshold**: Restricts each unique IP address to a maximum of **20 requests per minute**.
-- **Action**: Requests exceeding the limit bypass pipeline execution entirely, return an HTTP `429 Too Many Requests` status, and deliver a user-friendly message: `"You're sending messages too quickly. Please wait a moment and try again."`
-- **Exemptions**: Health checking endpoints (`/health`) bypass the rate limiter to maintain uptime reporting services.
+**Result**:
+ Average message processing latency dropped from 50 seconds to **1.65 seconds **achieving a **30x performance acceleration** under live conditions.
 
 ---
 
-## 📝 Logging Infrastructure
+## Security & Resource Management: Rate Limiting
 
-We set up a comprehensive logging system using Python's native `logging` module:
-- **Console Logging**: Configured with standardized formatting and distinct severity levels (`INFO`, `WARNING`, `ERROR`) to trace server health.
-- **Offline Analytics logging**: Every chat query, pipeline output, classification confidence score, retrieval score, and execution timeline is captured in a structured JSON Lines file (`logs/pipeline_conversations.jsonl`). This enables offline audit logs and telemetry parsing without introducing database latency.
+To protect backend resources, database capacity and downstream API quotas (Groq & Qdrant Cloud) we built a custom **Sliding-Window Token-Bucket Rate Limiter Middleware**:
+
+- **Threshold**:
+  Restricts each unique IP address to a maximum of **20 requests per minute**.
+
+- **Action**:
+  Requests exceeding the limit bypass pipeline execution entirely return an HTTP **429 Too Many Requests** status and deliver a user-friendly message: **"You're sending messages too quickly. Please wait a moment and try again."**
+
+- **Exemptions**:
+  Health checking endpoints (/health) bypass the rate limiter to maintain uptime reporting services.
 
 ---
 
-## 🧪 Unit Testing Suite & Code Quality Control
+## Logging Infrastructure
+
+We set up a comprehensive logging system using Python's native logging module:
+
+- **Console Logging**:
+  Configured with standardized formatting and distinct severity levels (INFO, WARNING, ERROR) to trace server health
+
+- **Offline Analytics logging**:
+  Every chat query, pipeline output, classification confidence score, retrieval score and execution timeline is captured in a structured JSON Lines file (**logs/pipeline_conversations.jsonl**) this enables offline audit logs and telemetry parsing without introducing database latency.
+
+---
+
+## Unit Testing Suite & Code Quality Control
 
 ### 1. Automated Tests
-We wrote an extensive unit testing suite under `tests/` utilizing Pytest to validate key application flows:
-- **Happy Paths**: Confirms successful interactions for greetings, mental health questions, feedback submissions, and health checks.
-- **Edge Cases**: Validates pipeline robustness against empty queries and out-of-scope inputs.
-- **Safety Overrides**: Ensures crisis keywords trigger immediate safety protocols and hotline injections.
-- **Rate Limiting**: Verifies that sending more than 20 queries per minute triggers HTTP 429 errors.
+We wrote an extensive unit testing suite under **tests/** utilizing Pytest to validate key application flows:
+
+- **Happy Paths**:
+  Confirms successful interactions for greetings, mental health questions, feedback submissions, and health checks.
+
+- **Edge Cases**:
+  Validates pipeline robustness against empty queries and out-of-scope inputs.
+
+- **Safety Overrides**:
+  Ensures crisis keywords trigger immediate safety protocols and hotline injections.
+
+- **Rate Limiting**:
+  Verifies that sending more than 20 queries per minute triggers HTTP 429 errors.
 
 We mocked Qdrant and Groq API clients to keep tests fast and independent of network availability.
 
@@ -209,23 +250,36 @@ tests\test_pipeline.py ...                                               [100%]
 ======================== 11 passed, 1 warning in 0.61s ========================
 ```
 
+
 ### 2. Pre-commit Hooks & Linting
 A `.pre-commit-config.yaml` configuration is configured with **Ruff** to enforce code quality before commits:
-- **Linter**: `ruff` automatically analyzes files for unused imports and syntax errors.
-- **Formatter**: `ruff-format` ensures code formatting complies with PEP 8 standards.
+
+- **Linter**:
+  `ruff` automatically analyzes files for unused imports and syntax errors.
+
+- **Formatter**:
+  `ruff-format` ensures code formatting complies with PEP 8 standards.
 
 ---
 
 ## 🐳 Containerization & Caching Strategy
 
 The backend is fully containerized using a production-grade Dockerfile:
-- **Multi-Stage Build**: Separates compile-time dependencies from the runtime image to reduce size.
-- **Dependency Caching**: Dependencies are installed *before* copying the application source code. This ensures changes to python files do not invalidate the cached dependency layers, accelerating build times.
-- **Size Optimization**: Installs the CPU-only PyTorch build (`https://download.pytorch.org/whl/cpu`) instead of standard PyTorch, cutting the final Docker image size down by **2.2 GB**.
-- **Service Orchestration**: An entrypoint script (`start.sh`) launches the OpenTelemetry Collector in the background and starts the Uvicorn FastAPI server on the dynamically mapped Hugging Face port (`${PORT:-7860}`).
+- **Multi-Stage Build**:
+  Separates compile-time dependencies from the runtime image to reduce size.
+
+- **Dependency Caching**: 
+  Dependencies are installed *before* copying the application source code. This ensures changes to python files do not invalidate the cached dependency layers, accelerating build times.
+
+- **Size Optimization**:
+  Installs the CPU-only PyTorch build (https://download.pytorch.org/whl/cpu) instead of standard PyTorch cutting the final Docker image size down by **2.2 GB**.
+
+- **Service Orchestration**:
+  An entrypoint script (start.sh) launches the OpenTelemetry Collector in the background and starts the Uvicorn FastAPI server on the dynamically mapped Hugging Face port (${PORT:-7860}).
+
 
 ### Docker Layer Caching Verification
-Docker build logs verify that layer caching is functioning correctly. Build stages utilize cached layers (indicated by `CACHED` tags in CI execution logs), reducing pipeline run times from several minutes to under 30 seconds.
+Docker build logs verify that layer caching is functioning correctly. Build stages utilize cached layers (indicated by `CACHED` tags in CI execution logs) reducing pipeline run times from several minutes to under 30 seconds.
 
 <div align="center">
   <img src="assets/Serenity_backend.png" alt="Docker Build Cache Hits" width="720"/>
@@ -234,9 +288,9 @@ Docker build logs verify that layer caching is functioning correctly. Build stag
 
 ---
 
-## 📊 System Observability (9 Metrics in Axiom)
+## System Observability (9 Metrics in Axiom)
 
-We instrumented 9 system metrics forwarded via OpenTelemetry HTTP exporter to our OpenTelemetry Collector container, which batches and routes them directly to Axiom:
+We instrumented 9 system metrics forwarded via OpenTelemetry HTTP exporter to our OpenTelemetry Collector container which batches and routes them directly to Axiom:
 
 | Category | Metric Name | Type | Rationale / Reasoning |
 | :--- | :--- | :--- | :--- |
@@ -257,8 +311,9 @@ We instrumented 9 system metrics forwarded via OpenTelemetry HTTP exporter to ou
   <p><i>Figure 3: Axiom Dashboard visualizing live metrics (Request counts, HTTP errors, response latency gauges, and intent/emotion distributions).</i></p>
 </div>
 
+
 ### System Alerting Monitors
-Axiom monitors are configured to alert the development team when metrics exceed safety thresholds, such as elevated error rates or high latency.
+Axiom monitors are configured to alert the development team when metrics exceed safety thresholds such as elevated error rates or high latency.
 
 <div align="center">
   <img src="assets/Monitors.png" alt="Axiom Alerting Monitors" width="720"/>
@@ -267,17 +322,26 @@ Axiom monitors are configured to alert the development team when metrics exceed 
 
 ---
 
-## 🔄 GitHub Actions CI/CD Pipeline
 
-A continuous integration and deployment pipeline is configured in `.github/workflows/ci.yml`. On every push to the `main` branch, the workflow automates:
-1. **Linting**: Verifies formatting and styling rules using **Ruff**.
-2. **Testing**: Runs the **Pytest** test suite (11 unit tests covering rates, safety gates, and API endpoints).
-3. **Container Build**: Compiles the Dockerfile using build caching and pushes the image to **GitHub Container Registry (GHCR)**.
-4. **HF Space Deploy**: Force-pushes the code changes directly to Hugging Face Spaces, triggering a rebuild of the production space.
+## GitHub Actions CI/CD Pipeline
+
+A continuous integration and deployment pipeline is configured in `.github/workflows/ci.yml`. On every push to the `main` branch the workflow automates:
+
+1. **Linting**:
+   Verifies formatting and styling rules using **Ruff**.
+
+2. **Testing**:
+   Runs the **Pytest** test suite (11 unit tests covering rates, safety gates, and API endpoints).
+
+3. **Container Build**:
+   Compiles the Dockerfile using build caching and pushes the image to **GitHub Container Registry (GHCR)**.
+
+4. **HF Space Deploy**:
+   Force-pushes the code changes directly to Hugging Face Spaces, triggering a rebuild of the production space.
 
 <div align="center">
   <img src="assets/Github_Actions.png" alt="GitHub Actions CI/CD Pipeline" width="720"/>
-  <p><i>Figure 5: Automated CI/CD pipeline completing Ruff checks, Pytest runs, Docker compiles, and Hugging Face deployments.</i></p>
+  <p><i>Figure 5: Automated CI/CD pipeline completing Ruff checks, Pytest runs, Docker compiles and Hugging Face deployments.</i></p>
 </div>
 
 ---
