@@ -1,3 +1,4 @@
+import asyncio
 from app.services.nlp_pipeline import _detect_quick_response, nlp_pipeline
 from app.services.session import SessionMemory
 from app.services.rag import rag_service
@@ -23,7 +24,7 @@ def test_detect_quick_response():
 
 def test_pipeline_quick_response_routing():
     session = SessionMemory(session_id="test_ip")
-    result = nlp_pipeline.run("hi", session)
+    result = asyncio.run(nlp_pipeline.run("hi", session))
 
     assert result["intent"] == "greeting"
     assert result["crisis_flag"] is False
@@ -73,7 +74,7 @@ def test_rag_reranking_logic(monkeypatch):
         )()
 
     class MockQdrantClient:
-        def query_points(self, *args, **kwargs):
+        async def query_points(self, *args, **kwargs):
             return mock_query()
 
     # Assign MockQdrantClient directly to avoid AttributeError
@@ -92,6 +93,6 @@ def test_rag_reranking_logic(monkeypatch):
     # With sadness the second document should be boosted to first place due to "loneliness" topic match (boost = 0.08) and "has_empathy" boost = 0.05
     # Document 1 score: 0.50 + 0 = 0.50
     # Document 2 score: 0.45 + 0.08 + 0.05 = 0.58 (Reranked first)
-    reranked = rag_service.retrieve_and_rerank("lonely", emotion="sadness")
+    reranked = asyncio.run(rag_service.retrieve_and_rerank("lonely", emotion="sadness"))
     assert len(reranked) == 2
     assert "loneliness counselor" in reranked[0]["context"]

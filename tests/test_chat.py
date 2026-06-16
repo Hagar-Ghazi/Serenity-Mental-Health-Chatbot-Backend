@@ -34,7 +34,7 @@ def test_chat_crisis_flagged(client, monkeypatch, db_session):
     # Mock pipeline output to simulate a crisis event
     from app.services.nlp_pipeline import nlp_pipeline
 
-    def mock_run_crisis(query, session, country="United States"):
+    async def mock_run_crisis(query, session, country="United States"):
         return {
             "answer": "Please stay safe! We are here for you.",
             "sources": [],

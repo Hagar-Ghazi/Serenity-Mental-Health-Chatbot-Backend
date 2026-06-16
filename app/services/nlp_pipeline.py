@@ -3,10 +3,11 @@ import json
 import time
 import random
 import logging
+import asyncio
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
+from fastapi.concurrency import run_in_threadpool
 from app.config import GROQ_API_KEY, GROQ_MODEL, BASE_DIR
 from app.services.language import language_detector
 from app.services.emotion import emotion_classifier
@@ -64,9 +65,8 @@ def _log_pipeline_interaction(query: str, pipeline_output: dict) -> None:
 
 
 # ========================================================================
-# THREAD POOL — reused across requests for parallel stage execution
+# THREAD POOL — removed, we now use fastapi.concurrency.run_in_threadpool
 # ========================================================================
-_executor = ThreadPoolExecutor(max_workers=3)
 
 
 # ========================================================================
@@ -540,12 +540,12 @@ class NLPPipeline:
         if not self._groq_configured:
             if not GROQ_API_KEY:
                 raise ValueError("GROQ_API_KEY is not set.")
-            from groq import Groq
+            from groq import AsyncGroq
 
-            self._client = Groq(api_key=GROQ_API_KEY)
+            self._client = AsyncGroq(api_key=GROQ_API_KEY)
             self._groq_configured = True
 
-    def _call_therapist_llm(
+    async def _call_therapist_llm(
         self, query: str, prompt: str, history: Optional[list] = None
     ) -> str:
         """Calls Groq with system instruction, conversation history, and user query."""
@@ -562,7 +562,7 @@ class NLPPipeline:
         messages.append({"role": "user", "content": query})
 
         try:
-            response = self._client.chat.completions.create(
+            response = await self._client.chat.completions.create(
                 model=GROQ_MODEL, messages=messages, temperature=0.75, max_tokens=700
             )
             return response.choices[0].message.content.strip()
@@ -573,7 +573,7 @@ class NLPPipeline:
     # ================================================================
     # RUN PIPELINE — main entry point
     # ================================================================
-    def run(
+    async def run(
         self, query: str, session: SessionMemory, country: str = "Unknown"
     ) -> Dict[str, Any]:
         t_start = time.time()
@@ -665,16 +665,16 @@ class NLPPipeline:
         # Stage 1: PARALLEL Language + Emotion Detection
         # ──────────────────────────────────────────────────────
         t_parallel = time.time()
-        f_lang = _executor.submit(language_detector.detect, query)
-        f_emotion = _executor.submit(emotion_classifier.classify, query)
+        lang_result, emotion_result = await asyncio.gather(
+            run_in_threadpool(language_detector.detect, query),
+            run_in_threadpool(emotion_classifier.classify, query),
+        )
 
-        lang_result = f_lang.result()
         language = lang_result["prediction"]
         if language not in ("en", "ar"):
             language = "en"
         timings["language_ms"] = round((time.time() - t_parallel) * 1000, 1)
 
-        emotion_result = f_emotion.result()
         emotion = emotion_result["emotion"]
         emotion_conf = emotion_result["confidence"]
         timings["emotion_ms"] = round((time.time() - t_parallel) * 1000, 1)
@@ -683,7 +683,7 @@ class NLPPipeline:
         # Stage 2: INTENT CLASSIFICATION (Gemini LLM)
         # ──────────────────────────────────────────────────────
         t_intent = time.time()
-        intent_result = intent_classifier.classify(
+        intent_result = await intent_classifier.classify(
             query, detected_emotion=emotion, detected_language=language
         )
         routing = intent_result.get("routing", "rag")
@@ -750,7 +750,7 @@ class NLPPipeline:
                 response_style,
                 country=country,
             )
-            answer = self._call_therapist_llm(query, prompt, history)
+            answer = await self._call_therapist_llm(query, prompt, history)
             timings["therapist_ms"] = round((time.time() - t_llm) * 1000, 1)
             if session:
                 session.add_turn(
@@ -777,7 +777,7 @@ class NLPPipeline:
         # Stage 4: RAG RETRIEVAL + EMOTION RERANKING
         # ──────────────────────────────────────────────────────
         t_retrieve = time.time()
-        chunks = rag_service.retrieve_and_rerank(query, emotion=emotion)
+        chunks = await rag_service.retrieve_and_rerank(query, emotion=emotion)
         timings["retrieval_ms"] = round((time.time() - t_retrieve) * 1000, 1)
 
         # ──────────────────────────────────────────────────────
@@ -816,7 +816,7 @@ class NLPPipeline:
             prior_crisis,
             country,
         )
-        answer = self._call_therapist_llm(query, prompt, history)
+        answer = await self._call_therapist_llm(query, prompt, history)
         timings["therapist_ms"] = round((time.time() - t_llm) * 1000, 1)
 
         # Build sources list for API response

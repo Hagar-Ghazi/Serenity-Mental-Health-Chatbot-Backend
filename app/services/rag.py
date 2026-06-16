@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from typing import List, Dict, Any, Optional
 from app.config import QDRANT_URL, QDRANT_API_KEY
 
@@ -34,7 +34,7 @@ class RAGService:
                 raise ValueError(
                     "Qdrant URL or API Key is missing in environment variables."
                 )
-            self._qdrant_client = QdrantClient(
+            self._qdrant_client = AsyncQdrantClient(
                 url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60
             )
             self._is_loaded = True
@@ -51,7 +51,7 @@ class RAGService:
             return 5
         return 7
 
-    def retrieve_and_rerank(
+    async def retrieve_and_rerank(
         self, query: str, emotion: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         self._load()
@@ -59,13 +59,14 @@ class RAGService:
 
         try:
             vector = self._embed(query)
-            results = self._qdrant_client.query_points(
+            query_res = await self._qdrant_client.query_points(
                 collection_name=COLLECTION_NAME,
                 query=vector,
                 limit=top_k,
                 with_payload=True,
                 score_threshold=SIMILARITY_GATE,
-            ).points
+            )
+            results = query_res.points
 
             chunks = []
             for r in results:

@@ -1,7 +1,7 @@
 import json
 import joblib
 from typing import Dict, Any, Optional
-from groq import Groq
+from groq import AsyncGroq
 from app.config import INTENT_ARTIFACTS_DIR, GROQ_API_KEY, GROQ_MODEL
 
 
@@ -35,7 +35,7 @@ class IntentClassifier:
                     "GROQ_API_KEY is not configured in environment variables."
                 )
 
-            self._client = Groq(api_key=GROQ_API_KEY)
+            self._client = AsyncGroq(api_key=GROQ_API_KEY)
             self._is_loaded = True
 
     def has_crisis_signals(self, text: str) -> bool:
@@ -43,7 +43,7 @@ class IntentClassifier:
         text_lower = text.lower().strip()
         return any(signal in text_lower for signal in self._crisis_signals)
 
-    def classify(
+    async def classify(
         self,
         text: str,
         detected_emotion: Optional[str] = None,
@@ -71,7 +71,7 @@ class IntentClassifier:
                 context_parts.append(f"Detected language: {detected_language}")
             enriched_message = "\n".join(context_parts)
 
-            response = self._client.chat.completions.create(
+            response = await self._client.chat.completions.create(
                 model=GROQ_MODEL,
                 messages=[
                     {"role": "system", "content": self._system_prompt},

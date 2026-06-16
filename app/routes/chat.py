@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import ChatSession, Message
@@ -13,7 +14,7 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse, summary="Send chat message")
-def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)):
+async def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)):
     """Accepts a chat message, runs the NLP pipeline (classification + RAG + LLM),
 
     saves the message to the database, and registers monitoring metrics.
@@ -37,54 +38,63 @@ def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)):
     session = session_store.get_or_create(client_ip)
 
     # 3. Ensure ChatSession row exists in database
-    db_session = (
-        db.query(ChatSession).filter(ChatSession.session_id == client_ip).first()
-    )
-    if not db_session:
-        db_session = ChatSession(session_id=client_ip)
-        db.add(db_session)
-        db.commit()
-        db.refresh(db_session)
+    def get_or_create_db_session():
+        db_sess = (
+            db.query(ChatSession).filter(ChatSession.session_id == client_ip).first()
+        )
+        if not db_sess:
+            db_sess = ChatSession(session_id=client_ip)
+            db.add(db_sess)
+            db.commit()
+            db.refresh(db_sess)
+        return db_sess
+
+    db_session = await run_in_threadpool(get_or_create_db_session)
 
     # 4. Run the chatbot pipeline
-    result = nlp_pipeline.run(query=message_text, session=session, country=country)
+    result = await nlp_pipeline.run(
+        query=message_text, session=session, country=country
+    )
 
-    try:
-        # 5. Persist messages to the database
-        db_user_msg = Message(
-            session_id=client_ip,
-            role="user",
-            content=message_text,
-            emotion=result["emotion"],
-            emotion_conf=result["emotion_conf"],
-            language=result["language"],
-            intent=result["intent"],
-            crisis_flag=result["crisis_flag"],
-        )
-        db_bot_msg = Message(
-            session_id=client_ip,
-            role="assistant",
-            content=result["answer"],
-            crisis_flag=result["crisis_flag"],
-        )
-        db.add(db_user_msg)
-        db.add(db_bot_msg)
+    # 5. Persist messages to the database
+    def persist_messages_to_db():
+        try:
+            db_user_msg = Message(
+                session_id=client_ip,
+                role="user",
+                content=message_text,
+                emotion=result["emotion"],
+                emotion_conf=result["emotion_conf"],
+                language=result["language"],
+                intent=result["intent"],
+                crisis_flag=result["crisis_flag"],
+            )
+            db_bot_msg = Message(
+                session_id=client_ip,
+                role="assistant",
+                content=result["answer"],
+                crisis_flag=result["crisis_flag"],
+            )
+            db.add(db_user_msg)
+            db.add(db_bot_msg)
 
-        # Increment turn count
-        db_session.turn_count += 1
+            # Increment turn count
+            db_session.turn_count += 1
 
-        # Log crisis event if safety limits breached
-        if result["crisis_flag"]:
-            db_session.prior_crisis = True
-            log_crisis_event(db, client_ip, message_text)
+            # Log crisis event if safety limits breached
+            if result["crisis_flag"]:
+                db_session.prior_crisis = True
+                log_crisis_event(db, client_ip, message_text)
 
-        db.commit()
+            db.commit()
+        except Exception as db_err:
+            db.rollback()
+            app_logger.error(
+                f"Database write failed during /chat transaction: {db_err}",
+                exc_info=True,
+            )
 
-    except Exception as db_err:
-        db.rollback()
-        app_logger.error(
-            f"Database write failed during /chat transaction: {db_err}", exc_info=True
-        )
+    await run_in_threadpool(persist_messages_to_db)
 
     # 6. Record telemetry metrics via OpenTelemetry SDK
     metrics.intent_counter.add(1, {"intent": result["intent"]})

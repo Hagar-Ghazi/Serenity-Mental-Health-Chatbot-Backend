@@ -97,7 +97,7 @@ def mock_external_calls(monkeypatch):
     # Mock Gemini intent classifier
     from app.services.intent import intent_classifier
 
-    def mock_intent_classify(text, detected_emotion=None, detected_language=None):
+    async def mock_intent_classify(text, detected_emotion=None, detected_language=None):
         return {
             "intent": "greeting",
             "routing": "direct",
@@ -111,7 +111,7 @@ def mock_external_calls(monkeypatch):
     # Mock Qdrant retrieval
     from app.services.rag import rag_service
 
-    def mock_retrieve(query, emotion=None):
+    async def mock_retrieve(query, emotion=None):
         return [
             {
                 "context": "Context doc for anxiety management",
@@ -129,7 +129,7 @@ def mock_external_calls(monkeypatch):
     # Mock Gemini Chat completions in nlp_pipeline
     from app.services.nlp_pipeline import nlp_pipeline
 
-    def mock_call_llm(query, prompt, history):
+    async def mock_call_llm(query, prompt, history):
         if "⚠ CRISIS CONTEXT ACTIVE" in prompt:
             return "I hear you, you are not alone. Please call the hotline: 988"
         return "This is a mocked empathetic therapist response."
