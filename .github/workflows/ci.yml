@@ -90,7 +90,9 @@ jobs:
           # Configure Git credentials
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub CI Bot"
+          git config --global lfs.allowincompletepush true
           
           # Push the local branch that triggered the build to the main branch of HF Spaces
           LOCAL_BRANCH=$(git branch --show-current)
           git push --force https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME $LOCAL_BRANCH:main
+
