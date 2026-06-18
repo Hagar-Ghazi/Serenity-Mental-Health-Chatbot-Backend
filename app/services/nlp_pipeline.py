@@ -74,13 +74,14 @@ Your core principles:
 1. BE NATURAL AND CONVERSATIONAL: Talk like a caring human, not a robotic textbook therapist. Do not awkwardly repeat the user's exact words back to them.
 2. MATCH THE TONE: If the user is casual, lighthearted, or asking a simple question (e.g., about a recipe, a hobby, or feeling happy), be friendly, brief, and conversational. Save deep therapeutic reflection ONLY for actual distress or emotional pain.
 3. NEVER MINIMIZE PAIN: If they share pain, validate it warmly before offering any advice.
-4. KEEP IT CONCISE: Write 1 to 2 short, natural paragraphs. Do not force long essays unless the user wrote a very long message.
+4. RESPONSE LENGTH AND DETAIL: Talk like a caring, comforting supporter. If the user is sharing actual pain, distress, sadness, or venting about a difficult/complex situation, you MUST write a longer, deeper, and more detailed comforting response (2 to 4 paragraphs) to validate their feelings, explore their situation, and offer deep warmth and empathy. Do NOT write short 1-paragraph answers for serious distress. However, if the user is greeting you or asking a simple, lighthearted question, keep it brief and conversational (1 to 2 short paragraphs).
 5. GENTLE GUIDANCE: You may ask a natural question to keep the conversation flowing, but only if it makes sense. Do not force a probing psychological question on a casual topic.
 6. LANGUAGE & CULTURAL STYLE:
-    - You must respond ONLY in the exact language the user used.
-    - If the user writes in Arabic, respond ONLY in warm, natural Egyptian Arabic (عامية مصرية بسيطة). DO NOT use Modern Standard Arabic (الفصحى) unless the user uses it.
-    - NEVER use Japanese, English, or any other language when the user speaks Arabic.
-    - Use light, appropriate emojis when they naturally fit (💛 🤍 🌷 🫂 😊 💙). Never overuse them in crisis.
+    - Always respond STRICTLY in the single language the user used.
+    - If the user writes in English, respond ENTIRELY in English. Do NOT include any Arabic words, Arabic characters, or Franco-Arabic transliterations (like writing Arabic words using English letters).
+    - If the user writes in Arabic, respond ENTIRELY in simple, warm Egyptian Arabic (عامية مصرية بسيطة ولهجة مصرية عامية دافئة وحقيقية). Do NOT use Modern Standard Arabic (الفصحى) except for extremely common phrases.
+    - NEVER mix languages or provide translations or transliterations in your response. Do NOT use non-Arabic letters or foreign scripts (no English, no Chinese, no Japanese, no French, and no Latin script) when replying to Arabic queries. Write using only standard Arabic script.
+    - EMOJIS & WARMTH: Use warm, comforting emojis and hearts when they naturally fit (e.g., 🫂, 💛, 🤍, 🌷, 🩹, ❤️, 😊) to show emotional warmth, support, and care, especially in emotional contexts or responses that need heart. Never overuse them in a severe crisis, but use them to make your support feel genuinely warm, human, and caring.
 7. CRISIS HANDLING: If a crisis is detected, prioritize immediate safety, extreme warmth, and direct the user to the provided resources without being pushy.
 """
 
@@ -321,27 +322,27 @@ def _get_time_period() -> str:
 _QUICK_RESPONSES: dict[str, dict[str, list[str]]] = {
     "greeting": {
         "en": [
-            "Hello! 😊 I'm really glad you're here — this is a safe space. What's on your mind today?"
+            "Hello! 😊 I'm really glad you're here this is a safe space what's on your mind today?"
         ],
         "ar": [
             "أهلًا بيك! 😊 مجرد إنك قررت تتكلم خطوة مهمة وشجاعة احكي براحتك وأنا هسمعك من غير أي حكم أو ضغط 🤗"
         ],
         "ar_returning": [
-            "أهلًا بيك من جديد! 😊 سعيد إني بشوفك تاني إيه الأخبار من آخر مرة اتكلمنا؟ 💙"
+            "أهلًا بيك من جديد 😊 سعيد إني بشوفك تاني إيه الأخبار من آخر مرة اتكلمنا؟ 💙"
         ],
     },
     "gratitude": {
         "en": [
-            "You're so welcome! 💛 Remember, I'm always here whenever you need to talk."
+            "You're so welcome! 💛 Remember I'm always here whenever you need to talk"
         ],
         "ar": [
-            "العفو! 😊 إنت أظهرت قوة حقيقية بإنك انفتحت وحكيت اعتني بنفسك ولا تتردد إنك ترجع في أي وقت. 💛"
+            "العفو 😊 إنت أظهرت قوة حقيقية بإنك انفتحت وحكيت اعتني بنفسك ولا تتردد إنك ترجع في أي وقت. 💛"
         ],
     },
     "goodbye": {
-        "en": ["Take care of yourself! 💛 You're not alone in this."],
+        "en": ["Take care of yourself 💛 You're not alone in this."],
         "ar": [
-            "اعتني بنفسك! 💛 تذكر أنا هنا وقت ما تحتاج تحكي في أي وقت ما إنت لوحدك مع السلامة! 😊"
+            "اعتني بنفسك 💛وتذكر انا هنا وقت ما تحتاج تتكلم في أي وقت ما إنت مش لوحدك مع السلامة! 😊"
         ],
     },
     "out_of_scope": {
@@ -359,13 +360,13 @@ _TIME_OPENERS = {
         "morning": "Good morning! ☀️ ",
         "afternoon": "",
         "evening": "Good evening! 🌙 ",
-        "night": "Hey, it's late — I hope you're taking care of yourself. ",
+        "night": "Hey, it's late I hope you're taking care of yourself ",
     },
     "ar": {
         "morning": "صباح الخير! ☀️ ",
         "afternoon": "",
         "evening": "مساء الخير! 🌙 ",
-        "night": "الوقت متأخر — إن شاء الله بخير. ",
+        "night": "الوقت متأخر إن شاء الله  تكون بخير",
     },
 }
 
@@ -496,9 +497,22 @@ def _build_therapist_prompt(
     if emotion:
         sections.append(f"Detected emotion: {emotion}")
 
-    if language and language != "en":
+    if language == "en":
         sections.append(
-            f"Language Instruction: Respond ENTIRELY and natively in {language}. Do NOT include English, Japanese, or any other languages."
+            "Language Instruction:\n"
+            "- The user spoke in English.\n"
+            "- You MUST respond ENTIRELY and ONLY in English.\n"
+            "- Do NOT include any Arabic words, Arabic characters, or Franco-Arabic transliterations (e.g. do NOT write Arabic phrases using English letters like 'Ana asif').\n"
+            "- Absolutely NO bilingual translation block (do NOT provide the response in both languages)."
+        )
+    elif language == "ar":
+        sections.append(
+            "Language Instruction:\n"
+            "- The user spoke in Arabic.\n"
+            "- You MUST respond ENTIRELY and ONLY in simple, warm Egyptian Arabic (عامية مصرية بسيطة ودافئة ولهجة مصرية عامية حقيقية).\n"
+            "- Do NOT use Modern Standard Arabic (الفصحى).\n"
+            "- Do NOT include any non-Arabic characters, non-Arabic words (no English, no Chinese, no Japanese, no French, no Latin script, and no Franco-Arabic). The response must contain ONLY Arabic script letters and Egyptian phrases.\n"
+            "- Absolutely NO bilingual translation block (do NOT provide the response in both languages)."
         )
 
     if chunks:
