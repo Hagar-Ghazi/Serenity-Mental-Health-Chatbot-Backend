@@ -21,8 +21,8 @@ HF_MODEL_NAME = os.getenv(
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
-# Groq Model name (kept for fallback compatibility)
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Groq Model name (hardcoded to 70B model to ensure high-quality Egyptian Arabic and prevent broken 8B model generations)
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # Google Gemini Model Configuration (Primary LLM Provider)
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")

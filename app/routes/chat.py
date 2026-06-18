@@ -116,3 +116,15 @@ async def chat(req: ChatRequest, request: Request, db: Session = Depends(get_db)
         intent=result["intent"],
         crisis_flag=result["crisis_flag"],
     )
+
+
+@router.delete("/chat", summary="Clear chat session")
+async def clear_chat(request: Request):
+    """Deletes the current user's session from the in-memory store."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+    session_store.delete(client_ip)
+    return {"status": "cleared", "session_id": client_ip}
