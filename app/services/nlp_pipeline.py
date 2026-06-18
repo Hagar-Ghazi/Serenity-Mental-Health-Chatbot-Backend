@@ -671,6 +671,15 @@ class NLPPipeline:
             language = "en"
         timings["language_ms"] = round((time.time() - t_parallel) * 1000, 1)
 
+        # Clear history if language changed from last turn to avoid language mixing
+        if session.history:
+            last_msg = session.history[-1]["content"]
+            has_arabic = any(u"\u0600" <= c <= u"\u06FF" for c in last_msg)
+            current_is_english = language == "en"
+            if (current_is_english and has_arabic) or (not current_is_english and not has_arabic):
+                session.history = []
+                logger.info(f"Cleared session history due to language switch to {language}.")
+
         emotion = emotion_result["emotion"]
         emotion_conf = emotion_result["confidence"]
         timings["emotion_ms"] = round((time.time() - t_parallel) * 1000, 1)
